@@ -1,0 +1,5 @@
+username,traversals
+retto,/->/login->/->/chat
+nick,/->/contact
+max,/->/login->/->/blog->/pricing
+redz,/->/pricing->/login->/->/chat->/chat/context

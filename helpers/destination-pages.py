@@ -2,10 +2,11 @@
 # For example: the destination pages for '/home' map to 'login', 'pricing', or 'chat'
 def get_desired_pages():
     destinations = {
-        "/home" : ["/login", "/chat", "/pricing"],
-        "/chat": ["/chat/context", "/chat/questions"],
-        "/settings": ["/settings/subscription", "/home"],
-        "/pricing": ["/success"]
+        "/" : ["/login", "/chat", "/pricing"],
+        "/chat": ["/chat/context", "/chat/questions", "/chat", "/pricing"],
+        "/settings": ["/settings/subscription", "/"],
+        "/pricing": ["/success"],
+        "/login": ["/"]
     }
 
     return destinations
@@ -17,7 +18,8 @@ def get_undesired_pages():
     destinations = { 
         "/settings": ["/settings/logout"],
         "/pricing": ["/blog", "contact"],
-        "/chat": ["/contact"]
+        "/chat": ["/contact", "/settings"],
+        "/": ["/contact"]
     }
 
     return destinations
