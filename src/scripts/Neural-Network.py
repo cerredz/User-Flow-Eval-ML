@@ -6,6 +6,8 @@ from helpers.destination_pages import get_desired_pages, get_undesired_pages
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import classification_report
+from imblearn.over_sampling import SMOTE
+from sklearn.preprocessing import StandardScaler
 
 def load_data():
     prob_data = np.genfromtxt("../../data/probability-data.csv", delimiter=",", skip_header=1, dtype=None, encoding="utf-8")
@@ -74,17 +76,27 @@ def get_training_data(paths, probabilities):
     return np.array(x), np.array(y), all_pages
 
 def run_neural_network(x, y):
-    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=.2, random_state=42)
-
-    model = MLPClassifier(hidden_layer_sizes=(64,32), max_iter=10000, random_state=42)
-
-    model.fit(X_train, Y_train)
-
-    y_pred = model.predict(X_test)
-    y_pred_proba = model.predict_proba(X_test)[:, 1]  # Probability of desired (1)
+    X_train, X_test, Y_train, Y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+    
+    smote = SMOTE(random_state=42)
+    X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
+    
+    model = MLPClassifier(hidden_layer_sizes=(32, 16), max_iter=10000, random_state=42)
+    model.fit(X_train_res, Y_train_res)
+    
+    y_pred_proba = model.predict_proba(X_test)[:, 1]
+    threshold = 0.2
+    y_pred = (y_pred_proba > threshold).astype(int)
+    print("Actual Labels:", Y_test)
+    print("Predicted Labels:", y_pred)
     print("Classification Report:")
     print(classification_report(Y_test, y_pred, zero_division=0))
     print("Predicted Probabilities for Desired Flow (Test Set):", y_pred_proba)
+    return model, scaler
 
 def predict_desired_probability(current_path, probabilities, model, all_pages, default_prob=.1):
     last_page = current_path[-1]
@@ -93,7 +105,7 @@ def predict_desired_probability(current_path, probabilities, model, all_pages, d
     probs_2 = [default_prob * 0.7] * len(all_pages)
     if len(current_path) >= 2:
         last_2_pages = '->'.join(current_path[-2:])
-        probs_2 = [probabilities[2].get(f"{last_2_pages}", default_prob) * .7 for page in all_pages]
+        probs_2 = [probabilities[2].get(f"{last_2_pages}->{page}", default_prob) * 0.7 for page in all_pages]
     
     probs_3 = [default_prob * 0.4] * len(all_pages)
     if len(current_path) >= 3:
@@ -110,5 +122,7 @@ if __name__ == "__main__":
     probabilities, usernames, paths = load_data()
     
     x, y, all_pages = get_training_data(paths, probabilities)
-    run_neural_network(x, y)
+    model, scaler = run_neural_network(x, y)
+
+
     
