@@ -3,7 +3,7 @@ from pprint import pprint
 from collections import defaultdict
 import time
 
-DEBUG = False
+DEBUG = True
 # load the data that is necessary to do the markov chaining algorithm
 def load_data():
     data = np.genfromtxt("../../data/user-traversals.csv", delimiter=",", skip_header=1, dtype=None, encoding="utf-8")
@@ -46,7 +46,6 @@ def setup_counts(data: list[list[str]], transition_counts: dict, state_counts: d
 
 # function to compute the probabilites, given the transition and state counts needed for the markov chain
 def compute_probabilites(probabilites: dict, transition_counts: dict, state_counts: dict):
-
     # loop through each order of counts
     for key, value in transition_counts.items():
         # loop through each dictionary in each order
@@ -60,6 +59,16 @@ def compute_probabilites(probabilites: dict, transition_counts: dict, state_coun
     if DEBUG:
         print("\nProbabilities:")
         pprint(probabilites)
+
+
+# save the probabilities of user traversals into a csv file
+def save_probabilities(probabilities: dict[int, dict[tuple[str], float]]):
+    with open("../../data/probability-data.csv", "w") as f:
+        f.write("Order, Path, Probability\n")
+        for order, probability_dict in probabilities.items():
+            for path, probability in probability_dict.items():
+                path_str = "->".join(path)
+                f.write(f"{order}, {path_str}, {probability}\n")
 
 
 if __name__ == "__main__":
@@ -85,6 +94,8 @@ if __name__ == "__main__":
     compute_probabilites(probabilites=probabilities, transition_counts=transition_counts, state_counts=state_counts)
 
     # save the results into the data folder
+    save_probabilities(probabilities=probabilities)
+
 
     end = time.time()
     print(f"🟢 Computed Markov Chain Algorithm in: {end - start:.4f} seconds")

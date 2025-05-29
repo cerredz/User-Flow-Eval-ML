@@ -17,9 +17,10 @@ def get_desired_pages():
 def get_undesired_pages():
     destinations = { 
         "/settings": ["/settings/logout"],
-        "/pricing": ["/blog", "contact"],
+        "/pricing": ["/blog", "contact", "/chat"],
         "/chat": ["/contact", "/settings"],
         "/": ["/contact"]
     }
 
     return destinations
+
