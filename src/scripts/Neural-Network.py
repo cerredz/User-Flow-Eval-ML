@@ -2,12 +2,16 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../')))
 import numpy as np
+import matplotlib.pyplot as plt
+import networkx as nx
 from helpers.destination_pages import get_desired_pages, get_undesired_pages
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import classification_report
 from imblearn.over_sampling import SMOTE
 from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import roc_curve, auc
 
 def load_data():
     prob_data = np.genfromtxt("../../data/probability-data.csv", delimiter=",", skip_header=1, dtype=None, encoding="utf-8")
@@ -29,6 +33,7 @@ def load_data():
 def get_training_data(paths, probabilities):
     x = [] # features
     y = [] # labels
+    num_ones = num_zeros = 0
     default_prob = 0.05
     weights = {1: 1.0, 2: .7, 3: .4}
 
@@ -70,6 +75,11 @@ def get_training_data(paths, probabilities):
             desired = get_desired_pages().get(last_page, [])
             undesired = get_undesired_pages().get(last_page, [])
             y.append(1 if next_page in desired else 0)
+            if next_page in desired:
+                num_ones += 1
+            else:
+                num_zeros += 1
+            
 
     print("Length of x:", len(x))
     print("Length of y:", len(y))
@@ -85,12 +95,11 @@ def run_neural_network(x, y):
     smote = SMOTE(random_state=42)
     X_train_res, Y_train_res = smote.fit_resample(X_train, Y_train)
     
-    model = MLPClassifier(hidden_layer_sizes=(32, 16), max_iter=10000, random_state=42)
+    model = MLPClassifier(hidden_layer_sizes=(16, 8), max_iter=10000, random_state=42)
     model.fit(X_train_res, Y_train_res)
     
     y_pred_proba = model.predict_proba(X_test)[:, 1]
-    threshold = 0.2
-    y_pred = (y_pred_proba > threshold).astype(int)
+    y_pred = (y_pred_proba > 0.01).astype(int)
     print("Actual Labels:", Y_test)
     print("Predicted Labels:", y_pred)
     print("Classification Report:")
@@ -118,11 +127,58 @@ def predict_desired_probability(current_path, probabilities, model, all_pages, d
     return proba
 
 
+def visualize_neural_network(model):
+    for i, weights, in enumerate(model.coefs_):
+        plt.figure(figsize=(10, 10))
+        plt.imshow(weights, aspect='auto', cmap='bwr')
+        plt.colorbar(label='Weight value')
+        plt.xlabel(f'Layer {i+1} Neurons')
+        plt.ylabel(f'Layer {i} Neurons')
+        plt.title(f'Weights from Layer {i} to Layer {i+1}')
+        plt.show()
+
+def plot_feature_vs_prediction(model, x, y, feature_idx=0):
+    feature = x[:, feature_idx]
+    y_pred_proba = model.predict_proba(x)[:, 1]
+    plt.scatter(feature, y, label='True label', alpha=0.5)
+    plt.scatter(feature, y_pred_proba, label='Predicted probability', alpha=0.5)
+    plt.xlabel(f'Feature {feature_idx}')
+    plt.ylabel('Label / Predicted Probability')
+    plt.legend()
+    plt.title('Feature vs True Label and Predicted Probability')
+    plt.show()
+
+def plot_confusion_matrix(model, x, y):
+    y_pred = model.predict(x)
+    cm = confusion_matrix(y, y_pred)
+    disp = ConfusionMatrixDisplay(confusion_matrix=cm)
+    disp.plot()
+    plt.show()
+
+def plot_roc_curve(model, x, y):
+    y_pred_proba = model.predict_proba(x)[:, 1]
+    fpr, tpr, _ = roc_curve(y, y_pred_proba)
+    roc_auc = auc(fpr, tpr)
+    plt.plot(fpr, tpr, label=f'ROC curve (area = {roc_auc:.2f})')
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC)')
+    plt.legend(loc="lower right")
+    plt.show()
+
+
 if __name__ == "__main__":
     probabilities, usernames, paths = load_data()
     
     x, y, all_pages = get_training_data(paths, probabilities)
     model, scaler = run_neural_network(x, y)
+    #visualize_neural_network(model)
+    #for i in range(x.shape[1]):
+    #    plot_feature_vs_prediction(model, x, y, feature_idx=i)
+    plot_confusion_matrix(model, x, y)
+    plot_roc_curve(model, x, y)
+    
 
 
     
