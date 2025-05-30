@@ -8,29 +8,6 @@ This project combines high-order Markov chain algorithms with neural networks to
 - **Neural Network Classifier**: Uses the output of the Markov model and labeled data (desired/undesired flows) to train a neural network that predicts the likelihood of a user following a desired path.
 - **Visualization**: Generates and saves confusion matrix plots to evaluate model performance.
 
-## Folder Structure
-
-```
-user-journey-ml/
-├── api/                # (Reserved for API code)
-├── data/               # Contains CSV files with user traversal and probability data
-│   ├── probability-data.csv
-│   └── user-traversals.csv
-├── helpers/            # Helper modules (e.g., destination page definitions)
-│   └── destination_pages.py
-├── src/
-│   ├── scripts/
-│   │   ├── Markov-Chain.py        # Markov chain computation and probability export
-│   │   ├── Neural_Network.py      # Neural network training and evaluation
-│   │   └── Visualization.py       # Visualization utilities (e.g., confusion matrix)
-│   └── visualization/             # Output folder for generated plots
-├── tests/              # (Reserved for test scripts)
-├── requirements.txt    # Python dependencies
-├── README.md           # Project overview and instructions
-├── .gitignore
-└── secrets.md          # Project description and notes
-```
-
 ## Data Files
 
 - `data/user-traversals.csv`: Raw user navigation paths.
@@ -68,11 +45,3 @@ pip install -r requirements.txt
    ```
    python src/scripts/Neural_Network.py
    ```
-3. Generate and save the confusion matrix plot:
-   ```
-   python src/scripts/Visualization.py
-   ```
-
----
-
-For more details, see `secrets.md`.
